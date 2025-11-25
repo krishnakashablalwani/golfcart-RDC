@@ -1,0 +1,23 @@
+{
+    "CSE-A": {
+        "Monday": [
+            {"start": "09:00", "end": "10:00", "subject": "Mathematics"},
+            {"start": "10:00", "end": "11:00", "subject": "Data Structures"},
+            {"start": "11:00", "end": "12:00", "subject": "Operating Systems"}
+        ],
+        "Tuesday": [
+            {"start": "09:00", "end": "10:00", "subject": "Physics"},
+            {"start": "10:00", "end": "11:00", "subject": "Chemistry"}
+        ],
+        "Wednesday": [
+            {"start": "09:00", "end": "17:00", "subject": "Full Day Lab"}
+        ],
+        "Thursday": [],
+        "Friday": []
+    },
+    "CSE-B": {
+        "Monday": [
+            {"start": "14:00", "end": "15:00", "subject": "Algorithms"}
+        ]
+    }
+}
