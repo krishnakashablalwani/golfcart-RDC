@@ -1,4 +1,42 @@
-models
-.venv
-.git
-__pycache__
+# Virtual Environment
+.venv/
+venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Face Recognition Cache
+face_encodings_cache.pkl
+
+# Generated Samples and Detections
+Samples/
+Detections/
+
+# Environment Variables
+.env
+
+# Models (downloaded by DeepFace)
+models/
+
+# Git
+.git/
+
+# Old Files
+old/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

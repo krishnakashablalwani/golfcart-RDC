@@ -1,0 +1,14 @@
+# Sample department mappings
+# Format: CODE=Department Name
+# Add your college's department codes here
+
+733=Computer Science & Engineering
+734=Information Technology
+735=Electronics & Communication Engineering
+736=Electrical & Electronics Engineering
+737=Mechanical Engineering
+738=Civil Engineering
+739=Chemical Engineering
+740=Biotechnology
+741=Aerospace Engineering
+742=Automobile Engineering
