@@ -101,10 +101,10 @@ python test_installation.py
 python manage_database.py
 
 # Register students
-python register_face_deepface.py
+python register_face.py
 
 # Run recognition
-python recognize_face_deepface.py
+python recognize_face.py
 ```
 
 ---

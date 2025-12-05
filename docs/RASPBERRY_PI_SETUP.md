@@ -52,7 +52,7 @@ python scripts/manage_database.py
 ### 5. Register Students
 
 ```bash
-python register_face_deepface.py
+python register_face.py
 ```
 
 **Instructions:**
@@ -63,7 +63,7 @@ python register_face_deepface.py
 ### 6. Run Recognition
 
 ```bash
-python recognize_face_deepface.py
+python recognize_face.py
 ```
 
 **Controls:**

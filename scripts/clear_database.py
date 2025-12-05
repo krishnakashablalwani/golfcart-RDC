@@ -74,7 +74,7 @@ def clear_database():
     # Show remaining students
     unregistered = db.list_unregistered_students()
     print(f"\n📋 {len(unregistered)} students ready to register")
-    print("\nRun 'python register_face_deepface.py' to start registration")
+    print("\nRun 'python register_face.py' to start registration")
     print("="*60 + "\n")
 
 if __name__ == "__main__":

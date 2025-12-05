@@ -9,10 +9,10 @@ High-resolution face recognition system for detecting students skipping class. O
 python manage_database.py
 
 # 2. Register student faces (15 samples each)
-python register_face_deepface.py
+python register_face.py
 
 # 3. Run real-time recognition
-python recognize_face_deepface.py
+python recognize_face.py
 ```
 
 ## 📖 Documentation
@@ -113,7 +113,7 @@ python test_installation.py
 python manage_database.py  # Option 6: View statistics
 
 # Test camera
-python register_face_deepface.py  # Try registering one student
+python register_face.py  # Try registering one student
 ```
 
 ## 📈 Performance

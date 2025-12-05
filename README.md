@@ -1,6 +1,6 @@
 # Golf Cart Face Recognition System
 
-High-resolution face recognition system for monitoring 5,000+ students using DeepFace and MongoDB.
+High-resolution face recognition system for monitoring 5,000+ students using DeepFace/InsightFace and MongoDB.
 
 ## 📁 Project Structure
 
@@ -64,7 +64,7 @@ python scripts/manage_database.py
 
 ```bash
 # Start registration
-python register_face_deepface.py
+python register_face.py
 
 # Instructions:
 # - Press 'C' to capture (15 times per student)
@@ -72,11 +72,27 @@ python register_face_deepface.py
 # - Press 'Q' to skip to next student
 ```
 
-### 4. Run Recognition
+### 4. Configure Backend (Optional)
+
+Choose between DeepFace (default) or InsightFace for embeddings:
+
+```bash
+# Use DeepFace (default, Facenet512)
+export USE_INSIGHTFACE=0
+
+# Use InsightFace ArcFace for better accuracy
+export USE_INSIGHTFACE=1
+export INSIGHTFACE_MODEL=r100  # or r50 for lighter model
+
+# Enable GPU acceleration if available
+export USE_GPU=1
+```
+
+### 5. Run Recognition
 
 ```bash
 # Start real-time recognition
-python recognize_face_deepface.py
+python recognize_face.py
 
 # Controls:
 # - 'Q' to quit
@@ -131,10 +147,18 @@ Edit `modules/config.py` for:
 
 ## 📝 Requirements
 
-- Python 3.13+
+- Python 3.11+ (3.13 may have limited TensorFlow support)
 - MongoDB (localhost:27017)
-- Webcam
+- Webcam / Pi Camera
 - See `requirements.txt` for packages
+
+### Optional Dependencies (InsightFace Mode)
+
+| Package       | Purpose                              |
+|---------------|--------------------------------------|
+| insightface   | ArcFace embeddings for better accuracy |
+| onnxruntime   | CPU inference (or onnxruntime-gpu)   |
+| retina-face   | Face alignment for InsightFace       |
 
 ## 🐛 Troubleshooting
 
@@ -144,9 +168,10 @@ Edit `modules/config.py` for:
 - See [SETUP_PC_LINUX.md](docs/SETUP_PC_LINUX.md)
 
 ### Recognition Not Working
-- Ensure 15 samples per student
-- Check distance threshold
-- Reload cache with 'R' key
+- Ensure 15 high-quality samples per student (sharpness, proper lighting)
+- Verify confidence threshold settings (default: ≥95%)
+- Try InsightFace backend (`USE_INSIGHTFACE=1`) for better accuracy
+- Reload local cache with 'R' key
 
 ### Import Errors
 - Verify virtual environment is activated
