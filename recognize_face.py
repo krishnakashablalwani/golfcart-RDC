@@ -43,7 +43,7 @@ from modules.database import db
 class FaceRecognition3D:
     """Face recognition with embedding + 3D landmarks (classic variant)."""
 
-    def __init__(self, camera_index: int = 0, width: int = 1280, height: int = 720):
+    def __init__(self, camera_index: int = 0, width: int = 1920, height: int = 1080):
         self.camera_index = camera_index
         self.width = width
         self.height = height

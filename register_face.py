@@ -79,8 +79,8 @@ class FaceRegistrationDeepFace:
     def __init__(
         self,
         camera_index: int = 1,
-        high_res_width: int = 1280,
-        high_res_height: int = 720,
+        high_res_width: int = 1920,
+        high_res_height: int = 1080,
     ):
         """
         Initialize face registration system with InsightFace
