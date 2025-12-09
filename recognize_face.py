@@ -322,29 +322,36 @@ class FaceRecognitionDeepFace:
 
     def calculate_distance(
         self, embedding1: np.ndarray, embedding2: np.ndarray
-    ) -> float:
+    ) -> Tuple[float, float]:
         """
-        Calculate L2 (Euclidean) distance between embeddings
-        More stable than cosine for ArcFace embeddings
+        Calculate cosine similarity for normalized embeddings
+        Since embeddings are L2 normalized to unit norm, cosine_similarity = dot_product
         
         Returns:
-            Distance value (0 = identical, ~2.0 = completely different)
+            (l2_distance, cosine_similarity) where similarity is 0-1 (1=identical, 0=different)
         """
         try:
             emb1 = embedding1.astype(np.float32)
             emb2 = embedding2.astype(np.float32)
             
-            # L2 distance is more stable for ArcFace
-            l2_distance = np.linalg.norm(emb1 - emb2)
+            # L2 distance
+            l2_distance = float(np.linalg.norm(emb1 - emb2))
             
-            return float(l2_distance)
+            # For normalized embeddings: cosine_similarity = dot_product
+            # Both are unit norm, so dot product directly gives cosine similarity
+            cosine_sim = float(np.dot(emb1, emb2))
+            
+            # Clamp to [0, 1] to handle floating point errors
+            cosine_sim = max(0.0, min(1.0, cosine_sim))
+            
+            return l2_distance, cosine_sim
         except Exception as e:
             logger.error(f"Distance calculation error: {e}")
-            return 100.0
+            return 100.0, 0.0
 
     def recognize_face(self, face_embedding: np.ndarray) -> Optional[Dict]:
         """
-        Recognize a face from its embedding
+        Recognize a face using cosine similarity (% match) as confidence
 
         Returns:
             Dictionary with student info or None if not recognized
@@ -353,74 +360,30 @@ class FaceRecognitionDeepFace:
             if len(self.known_embeddings) == 0:
                 return None
 
-            distances = [
+            distances_and_sims = [
                 self.calculate_distance(face_embedding, known_emb)
                 for known_emb in self.known_embeddings
             ]
 
-            min_distance = min(distances)
-            min_index = distances.index(min_distance)
-
-            if len(distances) == 1:
-                # Single person - L2 distance scale (0 = identical, ~1.4 = max difference)
-                # 50 samples = very high quality embeddings
-                if min_distance < 0.30:
-                    confidence = 0.99  # Excellent match
-                elif min_distance < 0.40:
-                    confidence = 0.97
-                elif min_distance < 0.50:
-                    confidence = 0.95
-                elif min_distance < 0.60:
-                    confidence = 0.92
-                elif min_distance < 0.70:
-                    confidence = 0.88
-                elif min_distance < 0.80:
-                    confidence = 0.84
-                elif min_distance < 0.90:
-                    confidence = 0.79
-                elif min_distance < 1.00:
-                    confidence = 0.73
-                elif min_distance < 1.10:
-                    confidence = 0.65
-                elif min_distance < 1.20:
-                    confidence = 0.55
-                else:
-                    confidence = 0.40  # Poor match
-            else:
-                # Multiple people - use gap-based confidence
-                sorted_distances = sorted(distances)
-                second_min = sorted_distances[1] if len(sorted_distances) > 1 else min_distance + 1.0
-
-                if min_distance < 1.00:
-                    gap = second_min - min_distance
-                    
-                    # Confidence based on distance and gap
-                    if min_distance < 0.30 and gap > 0.30:
-                        confidence = 0.99
-                    elif min_distance < 0.50 and gap > 0.25:
-                        confidence = 0.96
-                    elif min_distance < 0.70 and gap > 0.20:
-                        confidence = 0.92
-                    elif min_distance < 0.90 and gap > 0.15:
-                        confidence = 0.85
-                    elif min_distance < 1.10 and gap > 0.10:
-                        confidence = 0.75
-                    else:
-                        confidence = 0.60
-                else:
-                    confidence = 0.35
-
-                confidence = max(0, min(1, confidence))
-
+            # Find best match by highest cosine similarity
+            similarities = [sim for _, sim in distances_and_sims]
+            max_similarity = max(similarities)
+            min_index = similarities.index(max_similarity)
+            
+            l2_dist, cosine_sim = distances_and_sims[min_index]
+            
+            # Confidence = cosine similarity directly (0-100% match)
+            confidence = cosine_sim
+            
             closest_name = self.known_names[min_index]
             closest_roll = self.known_roll_numbers[min_index]
             print(
-                f"[DEBUG] Match: {closest_name} ({closest_roll}) | L2 Distance: {min_distance:.4f} | Confidence: {confidence:.1%}"
+                f"[MATCH] {closest_name} ({closest_roll}) | Similarity: {confidence:.1%} (L2: {l2_dist:.4f})"
             )
 
-            min_confidence_threshold = 0.50  # Lower threshold, improved confidence formula handles accuracy
+            min_confidence_threshold = 0.60  # 60% similarity threshold (tunable)
 
-            if confidence >= min_confidence_threshold and min_distance < 0.4:
+            if confidence >= min_confidence_threshold:
                 roll_number = self.known_roll_numbers[min_index]
                 name = self.known_names[min_index]
 
@@ -438,12 +401,12 @@ class FaceRecognitionDeepFace:
                 return {
                     "roll_number": roll_number,
                     "name": name,
-                    "distance": float(min_distance),
+                    "distance": float(l2_dist),
                     "confidence": float(confidence),
                 }
             else:
                 print(
-                    f"[DEBUG] ❌ Confidence {confidence:.1%} < {min_confidence_threshold*100:.0f}% or Distance {min_distance:.4f} > threshold - NOT RECOGNIZED"
+                    f"[REJECT] {closest_name} | Similarity {confidence:.1%} < {min_confidence_threshold*100:.0f}%"
                 )
 
             return None

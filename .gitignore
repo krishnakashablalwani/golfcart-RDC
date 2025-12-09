@@ -1,7 +1,7 @@
 # Virtual Environment
 .venv/
 venv/
-
+.venv
 # Python Cache
 __pycache__/
 *.pyc
@@ -40,3 +40,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+tests
+scripts
+modules
+docs
