@@ -11,6 +11,7 @@ __pycache__/
 
 # Face Recognition Cache
 face_encodings_cache.pkl
+face_embeddings_cache.pkl
 
 # Generated Samples and Detections
 Samples/
@@ -41,7 +42,7 @@ Thumbs.db
 # Logs
 *.log
 
-tests
-scripts
-modules
-docs
+tests/
+scripts/
+modules/
+docs/

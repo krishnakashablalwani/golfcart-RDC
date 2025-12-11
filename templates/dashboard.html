@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Monitor - Face Recognition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        .logout-btn {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 10px;
+        }
+        .detection-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .detection-idle {
+            text-align: center;
+            color: #888;
+            font-size: 18px;
+        }
+        .detection-alert {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .alert-content {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .student-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin: 10px 0;
+        }
+        .student-roll {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .confidence-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .confidence-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .confidence-label {
+            color: #666;
+        }
+        .confidence-value {
+            font-weight: 600;
+            color: #333;
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-ignore {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-ignore:hover {
+            background: #7f8c8d;
+        }
+        .btn-violate {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-violate:hover {
+            background: #c0392b;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👁️ Face Recognition Monitor</h1>
+        <a href="/logout" class="logout-btn">Logout</a>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value" id="total-students">{{ total_students }}</div>
+            <div class="stat-label">Students in Database</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="detections-count">0</div>
+            <div class="stat-label">Detections Today</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="violations-count">0</div>
+            <div class="stat-label">Violations Logged</div>
+        </div>
+    </div>
+
+    <div class="detection-container">
+        <div id="detection-content" class="detection-idle">
+            ⏳ Waiting for detections...
+        </div>
+    </div>
+
+    <script>
+        let detectionCount = 0;
+        let violationCount = 0;
+        let currentDetectionShown = false;
+
+        function pollDetection() {
+            fetch('/api/detection')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.student) {
+                        showDetectionAlert(data);
+                        if (!currentDetectionShown) {
+                            detectionCount++;
+                            document.getElementById('detections-count').textContent = detectionCount;
+                            currentDetectionShown = true;
+                        }
+                    } else {
+                        if (currentDetectionShown) {
+                            document.getElementById('detection-content').innerHTML = '⏳ Waiting for detections...';
+                            document.getElementById('detection-content').className = 'detection-idle';
+                            currentDetectionShown = false;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Poll every 500ms
+            setTimeout(pollDetection, 500);
+        }
+
+        function showDetectionAlert(data) {
+            const content = document.getElementById('detection-content');
+            
+            // Only update if this is a new detection or the content changed
+            if (content.innerHTML && content.innerHTML.includes(data.roll_number)) {
+                // Same detection already shown, don't re-animate
+                return;
+            }
+            
+            const timestamp = new Date(data.timestamp).toLocaleTimeString();
+
+            content.innerHTML = `
+                <div class="alert-content detection-alert">
+                    <h2>🚨 STUDENT DETECTED</h2>
+                    <div class="student-name">${data.name}</div>
+                    <div class="student-roll">(${data.roll_number})</div>
+
+                    <div class="confidence-info">
+                        <div class="confidence-item">
+                            <span class="confidence-label">Embedding Confidence:</span>
+                            <span class="confidence-value">${(data.embedding_confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="confidence-item">
+                            <span class="confidence-label">Landmark Confidence:</span>
+                            <span class="confidence-value">${(data.landmark_confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="confidence-item">
+                            <span class="confidence-label">Combined Confidence:</span>
+                            <span class="confidence-value" style="color: ${data.combined_confidence > 0.8 ? '#27ae60' : '#e74c3c'}">
+                                ${(data.combined_confidence * 100).toFixed(1)}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-ignore" onclick="ignoreDetection()">✓ Ignore</button>
+                        <button class="btn btn-violate" onclick="logViolation('${data.roll_number}', '${data.name}', '${data.email}', '${data.year}', '${data.department_code}')">⚠️ Violate</button>
+                    </div>
+
+                    <div class="timestamp">Detected at: ${timestamp}</div>
+                </div>
+            `;
+            content.className = 'detection-alert';
+        }
+
+        function ignoreDetection() {
+            // Just hide the alert, don't clear from backend
+            // The next detection will show when available
+            document.getElementById('detection-content').innerHTML = '⏳ Waiting for detections...';
+            document.getElementById('detection-content').className = 'detection-idle';
+            currentDetectionShown = false;
+        }
+
+        function logViolation(rollNumber, name, email, year, departmentCode) {
+            fetch('/api/violation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    roll_number: rollNumber,
+                    name: name,
+                    email: email,
+                    year: year,
+                    department_code: departmentCode
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                violationCount++;
+                document.getElementById('violations-count').textContent = violationCount;
+                alert(`Violation logged for ${name}. Email sent to ${email || 'registered email'}. Photo saved.`);
+                ignoreDetection();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error logging violation');
+            });
+        }
+
+        // Start polling on page load
+        pollDetection();
+    </script>
+</body>
+</html>
